@@ -33,6 +33,7 @@ class VGG_M_128(NET):
     self.nlayers = 7
     self.output_size = 128
     self.l_names = ['conv1', 'conv2', 'conv3', 'conv4', 'conv5', 'fc6', 'fc7']
+    # self.l_bnames = [b'conv1', b'conv2', b'conv3', b'conv4', b'conv5', b'fc6', b'fc7']
     self.conv_ksize = [[7, 7, 3, 96], [5, 5, 96, 256], [3, 3, 256, 512], [3, 3, 512, 512], [3, 3, 512, 512]]
     self.weights = {}
     self.bias = {}

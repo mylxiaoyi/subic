@@ -32,10 +32,12 @@ gpu = args.gpu
 dataset = args.testset
 gpu_frac = args.frac
 
+nclass = args.nclass
+
 def split_dataset(testx, testy, split, nclass=10):
   ty = testy.astype(int)
   frac = split/nclass
-  split = frac*nclass
+  split = int(frac*nclass)
   Dx = []; Dy=[]
   Qx = []; Qy=[]
   count = np.zeros((nclass,), dtype=int)
@@ -59,29 +61,44 @@ if(dataset.startswith('pascalvoc')):
   mlabel = True; ldim=20
   data_file = ''
   if(dataset.endswith('features')):
-    data_file = ['VOC_9963_vgg128_X.npy', 'VOC_9963_vgg128_Y_01.npy']
+    data_file = ['data/subic/VOC_9963_vgg128_X.npy', 'data/subic/VOC_9963_vgg128_Y_01.npy']
+  dataset_type = 'features'
 elif(dataset.startswith('caltech101')):
   nclass = 100 ## The two face classes are merged and background class is rejected. 
   split = 1000
   N = 8677
   data_file = 'caltech_images'
   if(dataset.endswith('features')):
-    data_file = ['caltech_features_path', 'caltech_labels_path']
+    data_file = ['data/subic/caltech101_8677_vgg128_X.npy', 'data/subic/caltech101_8677_vgg128_Y.npy']
+  dataset_type = 'features'
 elif(dataset.startswith('imagenetval')):
   nclass = 1000
   split = 2000
   N=50000
+  data_file = args.img_path
+  dataset_type = 'images'
+elif dataset.startswith('oxford'):
+  split = 55
+  N = 5118
+  data_file = ['data/subic/OxfordBuildings_5118_vgg128_X.npy', 'data/subic/OxfordBuildings_5118_vgg128_Y.npy']
+  dataset_type = 'features'
+  nclass=11
 else:
   nclass = args.nclass
   split = args.split
   N = args.N
   data_file = args.img_path
-  
-testx, testy = get_subic(dataset, data_file, wnet, net, m, k, param_file, N, shape, gpu=gpu, gpu_frac=gpu_frac, ldim=ldim)
-if(not mlabel): # reordering testx and testy as [query_set, database] with equal number of queries per class. 
-  testx, testy, split = split_dataset(testx, testy, split, nclass)
+  dataset_type = 'images'
+
+testx, testy = get_subic(dataset, data_file, dataset_type, wnet, net, m, k, param_file, N, shape, gpu=gpu, gpu_frac=gpu_frac, ldim=ldim)
+# if(not mlabel): # reordering testx and testy as [query_set, database] with equal number of queries per class. 
+#   testx, testy, split = split_dataset(testx, testy, split, nclass)
 x = testx[split:]
 q = testx[:split]
 res, dis  = retrieve(m, k, x, q, testy[:split], testy[split:], multilabel=mlabel)
 
+print('res.shape = ', res.shape)
+print('dis.shape = ', dis.shape)
+print('res[0] = ', res[:,0])
+print('res = {}, dis = {}'.format(res, dis))
 

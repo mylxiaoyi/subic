@@ -45,7 +45,7 @@ def ext_features(net, param_file, data, N, bsize=100, seq=False, label_dim=1, gp
   sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
   sess.run(tf.global_variables_initializer())
   if(param_file.endswith('.npy')):
-    net_params = np.load(param_file).item()
+    net_params = np.load(param_file, encoding='bytes').item()
     net.set_params(net_params, net.nlayers, sess)
   else:
     saver = tf.train.Saver()

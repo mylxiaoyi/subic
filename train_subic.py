@@ -18,6 +18,7 @@ parser.add_argument('--learning_rate', type=float, default=0.0001)
 parser.add_argument('--max_steps', type=int, default=5000, help='Number of iterations')
 parser.add_argument('--batch_size', type=int, default=200, help='Batch size')
 parser.add_argument('--img_path', default='', help='File with image paths and labels')
+parser.add_argument('--img_dir', default='', help='Dir containing images')
 parser.add_argument('--nclass', type=int, help='Number of classes')
 parser.add_argument('--m', type=int, default=8, help='Number of blocks')
 parser.add_argument('--k', type=int, default=256, help='block dimension')
@@ -46,10 +47,14 @@ max_entropy = m*np.log2(k)
 
 with tf.Graph().as_default():
 # Prepare data and model
-  data = Dataset(args.img_path)
+  # data = Dataset(args.img_path, args.img_dir)
+  data = Dataset(['data/subic/Landmark_CleanTrain_33352_vgg128_x.npy', 'data/subic/Landmark_CleanTrain_33352_vgg128_target_y.npy'], dataset_type='features')
   net = VGG_M_128()
   INPUT_SHAPE = (bsize,) + net.IMAGE_SHAPE
-  input_pl = tf.placeholder(tf.float32, shape= INPUT_SHAPE)
+  if args.finetune > 0:
+    input_pl = tf.placeholder(tf.float32, shape= (bsize, 128))
+  else:
+    input_pl = tf.placeholder(tf.float32, shape= INPUT_SHAPE)
   labels_pl = tf.placeholder(tf.int32, (bsize))
 
   nclass = args.nclass 
@@ -117,7 +122,7 @@ with tf.Graph().as_default():
   if(args.pretrained!='no'):
     print ("loading pretrained net")
     if(args.pretrained.endswith('.npy')):
-      c_subic.set_params(np.load(args.pretrained).item(), c_subic.nlayers-args.skip_last, sess, "")
+      c_subic.set_params(np.load(args.pretrained, encoding='bytes').item(), c_subic.nlayers-args.skip_last, sess, "")
     else: ### Full model is restored, skip_last is not used here.
       saver.restore(sess, args.pretrained)
 
@@ -125,7 +130,7 @@ with tf.Graph().as_default():
 
 # Training
   start_time = time.time()
-  for step in xrange(args.max_steps):
+  for step in range(args.max_steps):
     inp, labels = data.next_batch(bsize)
     feed_dict = {input_pl: inp, labels_pl: labels}
     if(step%100==0):
